@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 font-sans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brightmont Academy St. Charles - Operations & Inventory Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brightmont: {
+                            navy: '#0F172A',
+                            slate: '#1E293B',
+                            teal: '#0EA5E9',
+                            tealHover: '#0284C7',
+                            gold: '#F59E0B',
+                            goldHover: '#D97706',
+                            emerald: '#10B981',
+                            rose: '#F43F5E'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .gradient-border {
+            border-image: linear-gradient(to right, #0ea5e9, #f59e0b) 1;
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-subtle { animation: pulse-subtle 2.5s infinite; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printableSection, #printableSection * { visibility: visible; }
+            #printableSection { position: absolute; left: 0; top: 0; width: 100%; color: black !important; background: white !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-950 text-slate-100 flex overflow-hidden antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between transition-all duration-300 z-30 flex-shrink-0">
+        <div>
+            <!-- Campus Brand Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('hub')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-amber-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-sky-500/20">
+                        B
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-sm text-white tracking-tight leading-tight">Brightmont</h1>
+                        <p class="text-[11px] font-semibold text-amber-400">St. Charles Campus</p>
+                    </div>
+                </div>
+                <button onclick="toggleSidebarMobile()" class="md:hidden text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-3 space-y-1 text-xs font-semibold">
+                <p class="px-3 pt-2 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Main Portal</p>
+                <button onclick="switchTab('hub')" id="nav-hub" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-white bg-sky-600 font-bold shadow-md shadow-sky-600/30">
+                    <i class="fa-solid fa-house w-4 text-center"></i>
+                    <span>Staff Portal Hub</span>
+                </button>
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80">
+                    <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+                    <span>Executive Dashboard</span>
+                </button>
+                <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80">
+                    <i class="fa-solid fa-boxes-stacked w-4 text-center"></i>
+                    <span>Master Inventory</span>
+                </button>
+                <button onclick="switchTab('rooms')" id="nav-rooms" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80">
+                    <i class="fa-solid fa-door-open w-4 text-center"></i>
+                    <span>Room Explorer</span>
+                </button>
+
+                <p class="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Campus Operations</p>
+                <button onclick="switchTab('reorder')" id="nav-reorder" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-cart-shopping w-4 text-center text-amber-400"></i>
+                        <span>Meredith's Restock</span>
+                    </div>
+                    <span id="navReorderBadge" class="hidden bg-amber-500 text-slate-950 font-black text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+                <button onclick="switchTab('sync')" id="nav-sync" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80">
+                    <i class="fa-solid fa-file-excel w-4 text-center text-emerald-400"></i>
+                    <span>Google Sheets Sync</span>
+                </button>
+                <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80">
+                    <i class="fa-solid fa-chart-line w-4 text-center"></i>
+                    <span>Analytics & Reports</span>
+                </button>
+                <button onclick="switchTab('data')" id="nav-data" class="nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80">
+                    <i class="fa-solid fa-database w-4 text-center"></i>
+                    <span>Data Studio</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer / Google Sheet Quick Link -->
+        <div class="p-3 border-t border-slate-800 space-y-2">
+            <a href="https://docs.google.com/spreadsheets/d/1AVOthk_4lPCPi1zroepEjb19DozSYNyfwP2eifHjNr0/edit?gid=1289365460#gid=1289365460" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="w-full py-2 px-3 bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/50 rounded-xl text-xs font-bold transition flex items-center justify-between group">
+                <span class="flex items-center space-x-2">
+                    <i class="fa-solid fa-table text-emerald-400"></i>
+                    <span>Live Spreadsheet</span>
+                </span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+            </a>
+            <div class="px-2 py-1 flex items-center justify-between text-[11px] text-slate-500">
+                <span>Location: St. Charles, IL</span>
+                <span id="stCharlesTime" class="font-mono text-slate-400">--:--</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- WORKSPACE AREA -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        <!-- TOP BAR -->
+        <header class="h-16 bg-slate-900/90 border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between z-20 flex-shrink-0 backdrop-blur-md">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleSidebarMobile()" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div class="relative hidden sm:block w-64 md:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input type="text" id="topQuickSearch" onkeyup="handleQuickSearch(event)" placeholder="Global search items, rooms, subjects..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <!-- Sync Badge -->
+                <div onclick="switchTab('sync')" class="cursor-pointer flex items-center space-x-2 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-full text-xs hover:border-slate-700 transition">
+                    <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-subtle"></span>
+                    <span id="syncText" class="font-semibold text-slate-300">Sheet Synced</span>
+                </div>
+
+                <!-- Add Item Quick Action -->
+                <button onclick="openAddItemModal()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">Add Item</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN DYNAMIC CONTENT WINDOW -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+
+            <!-- SECTION 1: PUBLIC STAFF HUB -->
+            <section id="sec-hub" class="space-y-6">
+                <!-- Announcement Banner -->
+                <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 p-6 rounded-2xl border border-sky-800/40 shadow-xl relative overflow-hidden">
+                    <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-sky-500/10 to-transparent pointer-events-none"></div>
+                    <div class="relative z-10 space-y-2">
+                        <div class="inline-flex items-center space-x-2 bg-sky-500/20 text-sky-300 border border-sky-500/30 px-3 py-1 rounded-full text-xs font-bold">
+                            <i class="fa-solid fa-bullhorn"></i>
+                            <span>Campus Announcement</span>
+                        </div>
+                        <h2 class="text-2xl font-black text-white">Welcome to Brightmont St. Charles Hub</h2>
+                        <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                            Official operations workspace. Search equipment, view room storage directories, report consumable restocks to Meredith Hale, or manage inventory records synchronized directly with Google Sheets.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Staff Hub Quick Action Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div onclick="switchTab('inventory')" class="glass-panel p-5 rounded-2xl hover:border-sky-500/50 transition cursor-pointer group">
+                        <div class="w-12 h-12 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </div>
+                        <h3 class="font-extrabold text-sm text-white">Search Inventory</h3>
+                        <p class="text-xs text-slate-400 mt-1">Locate textbooks, lab supplies, and math kits in seconds.</p>
+                    </div>
+
+                    <div onclick="switchTab('reorder')" class="glass-panel p-5 rounded-2xl hover:border-amber-500/50 transition cursor-pointer group">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                        </div>
+                        <h3 class="font-extrabold text-sm text-white">Report to Meredith</h3>
+                        <p class="text-xs text-slate-400 mt-1">Flag low consumables & send automated restock emails.</p>
+                    </div>
+
+                    <div onclick="switchTab('rooms')" class="glass-panel p-5 rounded-2xl hover:border-emerald-500/50 transition cursor-pointer group">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                        <h3 class="font-extrabold text-sm text-white">Room Directory</h3>
+                        <p class="text-xs text-slate-400 mt-1">Browse Rooms 1–18, Kitchens, and Bookcases.</p>
+                    </div>
+
+                    <a href="https://docs.google.com/spreadsheets/d/1AVOthk_4lPCPi1zroepEjb19DozSYNyfwP2eifHjNr0/edit?gid=1289365460#gid=1289365460" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="glass-panel p-5 rounded-2xl hover:border-emerald-400 transition cursor-pointer group flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-file-excel"></i>
+                            </div>
+                            <h3 class="font-extrabold text-sm text-white">Open Live Sheet</h3>
+                            <p class="text-xs text-slate-400 mt-1">Direct link to Google Sheet ID #1AVOthk...Nr0.</p>
+                        </div>
+                        <span class="text-[11px] font-bold text-emerald-400 flex items-center gap-1 mt-2">
+                            Open Spreadsheet <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                        </span>
+                    </a>
+                </div>
+
+                <!-- Hub Quick Search & Highlights -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-panel p-5 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                <i class="fa-solid fa-fire text-amber-400"></i> Frequent Campus Items
+                            </h3>
+                            <button onclick="switchTab('inventory')" class="text-xs text-sky-400 font-bold hover:underline">View All &rarr;</button>
+                        </div>
+                        <div id="hubFeaturedItems" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl space-y-4">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-circle-info text-sky-400"></i> Campus Info
+                        </h3>
+                        <div class="space-y-3 text-xs text-slate-300">
+                            <div class="flex justify-between py-1 border-b border-slate-800">
+                                <span class="text-slate-500">Address:</span>
+                                <span class="font-semibold text-right">620 E Main St, St. Charles, IL</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-800">
+                                <span class="text-slate-500">Supply Contact:</span>
+                                <span class="font-semibold text-amber-400">Meredith Hale</span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b border-slate-800">
+                                <span class="text-slate-500">Columns Mapping:</span>
+                                <span class="font-semibold text-emerald-400">Exact 8 Standard Headers</span>
+                            </div>
+                            <div class="flex justify-between py-1">
+                                <span class="text-slate-500">Data Persistence:</span>
+                                <span class="font-semibold text-sky-400">LocalStorage + Webhook</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: EXECUTIVE DASHBOARD -->
+            <section id="sec-dashboard" class="hidden space-y-6">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-sky-500">
+                        <p class="text-[11px] font-bold text-slate-400 uppercase">Total Cataloged</p>
+                        <h3 id="dashTotalItems" class="text-2xl font-black text-white mt-1">0</h3>
+                        <span class="text-[10px] text-slate-500">Unique Item Records</span>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-emerald-500">
+                        <p class="text-[11px] font-bold text-slate-400 uppercase">Total Units</p>
+                        <h3 id="dashTotalUnits" class="text-2xl font-black text-emerald-400 mt-1">0</h3>
+                        <span class="text-[10px] text-slate-500">Physical On-Hand Units</span>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-amber-500">
+                        <p class="text-[11px] font-bold text-slate-400 uppercase">Consumables</p>
+                        <h3 id="dashConsumables" class="text-2xl font-black text-amber-400 mt-1">0</h3>
+                        <span class="text-[10px] text-slate-500">Flagged For Meredith</span>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-rose-500">
+                        <p class="text-[11px] font-bold text-slate-400 uppercase">Low Stock Alerts</p>
+                        <h3 id="dashLowStock" class="text-2xl font-black text-rose-400 mt-1">0</h3>
+                        <span class="text-[10px] text-slate-500">Quantity &le; Threshold</span>
+                    </div>
+
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500 col-span-2 sm:col-span-1">
+                        <p class="text-[11px] font-bold text-slate-400 uppercase">Total Rooms</p>
+                        <h3 id="dashTotalRooms" class="text-2xl font-black text-indigo-400 mt-1">0</h3>
+                        <span class="text-[10px] text-slate-500">Campus Storage Spaces</span>
+                    </div>
+                </div>
+
+                <!-- Dashboard Charts & Low Stock Action Area -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Low Stock Alert Queue -->
+                    <div class="lg:col-span-2 glass-panel p-5 rounded-2xl space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Low Stock & Consumable Triggers
+                            </h3>
+                            <button onclick="switchTab('reorder')" class="text-xs text-sky-400 font-bold hover:underline">Open Meredith's Desk &rarr;</button>
+                        </div>
+                        <div id="dashAlertList" class="space-y-2 max-h-80 overflow-y-auto">
+                            <!-- Dynamically injected -->
+                        </div>
+                    </div>
+
+                    <!-- Visual Summary Chart -->
+                    <div class="glass-panel p-5 rounded-2xl space-y-3 flex flex-col justify-between">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <i class="fa-solid fa-chart-pie text-sky-400"></i> Stock Health Distribution
+                        </h3>
+                        <div class="h-56 relative flex items-center justify-center">
+                            <canvas id="dashStockHealthChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Log -->
+                <div class="glass-panel p-5 rounded-2xl space-y-3">
+                    <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                        <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Recent Audit Log
+                    </h3>
+                    <div id="dashActivityLog" class="space-y-2 text-xs text-slate-400 font-mono">
+                        <!-- Activity injected -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: MASTER INVENTORY DIRECTORY -->
+            <section id="sec-inventory" class="hidden space-y-5">
+                <!-- Toolbar & Filter Engine -->
+                <div class="glass-panel p-4 rounded-2xl space-y-3">
+                    <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+                        <!-- Search Box -->
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                            <input type="text" id="inventorySearchInput" oninput="applyInventoryFilters()" placeholder="Search item name, description, room, contact, or notes..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-sky-500 transition">
+                        </div>
+
+                        <!-- Dropdown Criteria -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="filterSubject" onchange="applyInventoryFilters()" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500">
+                                <option value="">All Primary Subjects</option>
+                            </select>
+
+                            <select id="filterRoom" onchange="applyInventoryFilters()" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500">
+                                <option value="">All Rooms / Spaces</option>
+                            </select>
+
+                            <select id="filterConsumable" onchange="applyInventoryFilters()" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500">
+                                <option value="">Consumable: All</option>
+                                <option value="Yes">Consumable ("Yes")</option>
+                                <option value="No">Non-Consumable (Blank/"No")</option>
+                            </select>
+
+                            <select id="filterStockHealth" onchange="applyInventoryFilters()" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500">
+                                <option value="">Stock Status: All</option>
+                                <option value="low">Low Stock (&le; Threshold)</option>
+                                <option value="out">Out of Stock (0)</option>
+                                <option value="ok">In Stock (&gt; Threshold)</option>
+                                <option value="archived">Archived Records</option>
+                            </select>
+
+                            <!-- View Mode Buttons -->
+                            <div class="flex border border-slate-800 rounded-xl overflow-hidden bg-slate-950 p-0.5 ml-auto">
+                                <button id="btnViewTable" onclick="setInventoryViewMode('table')" class="px-3 py-1 text-xs font-bold rounded-lg bg-sky-600 text-white transition">
+                                    <i class="fa-solid fa-list"></i>
+                                </button>
+                                <button id="btnViewCards" onclick="setInventoryViewMode('cards')" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
+                                    <i class="fa-solid fa-grip"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metrics bar -->
+                    <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/80 pt-2">
+                        <span id="filteredResultsBadge" class="font-medium text-slate-300">Showing 0 items</span>
+                        <button onclick="resetInventoryFilters()" class="text-sky-400 hover:underline flex items-center gap-1 font-semibold">
+                            <i class="fa-solid fa-rotate-left text-[10px]"></i> Reset Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TABLE VIEW -->
+                <div id="inventoryTableView" class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase text-[10px] tracking-wider border-b border-slate-800">
+                                <tr>
+                                    <th class="p-3 w-10 text-center">
+                                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="rounded border-slate-700 bg-slate-950 text-sky-500 focus:ring-0">
+                                    </th>
+                                    <th class="p-3 w-12 text-center">Photo</th>
+                                    <th class="p-3">Primary Subject Area</th>
+                                    <th class="p-3">Ordering Name and/or link</th>
+                                    <th class="p-3">Rooms/Space Storing</th>
+                                    <th class="p-3 text-center">Quantity</th>
+                                    <th class="p-3 text-center">Consumable?</th>
+                                    <th class="p-3">Contact People</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                <!-- Injected dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CARDS VIEW -->
+                <div id="inventoryCardsView" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Cards injected dynamically -->
+                </div>
+            </section>
+
+            <!-- SECTION 4: ROOM EXPLORER -->
+            <section id="sec-rooms" class="hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-door-open text-sky-400"></i> St. Charles Room Directory
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Explore physical classrooms, storage cabinets, bookcases, and workrooms.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="roomExplorerSearch" oninput="renderRoomExplorer()" placeholder="Filter rooms or items..." class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                        <button onclick="printRoomManifest()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-print"></i> Manifest
+                        </button>
+                    </div>
+                </div>
+
+                <div id="roomExplorerGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic room cards -->
+                </div>
+            </section>
+
+            <!-- SECTION 5: REORDER & RESTOCK DESK (MEREDITH'S PORTAL) -->
+            <section id="sec-reorder" class="hidden space-y-6">
+                <div class="bg-amber-950/40 border border-amber-800/50 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="space-y-1">
+                        <div class="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 px-3 py-0.5 rounded-full text-xs font-bold border border-amber-500/30">
+                            <i class="fa-solid fa-bell"></i> Meredith Hale Consumables Alert Desk
+                        </div>
+                        <h2 class="text-xl font-black text-white">Consumable Replacement Desk</h2>
+                        <p class="text-xs text-slate-300 max-w-xl">
+                            Consumable items marked "Yes" automatically queue here when depleted or below threshold for Meredith Hale (`meredithhale@brightmontacademy.com`).
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openPrintablePOModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i> Print Purchase Order
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reorder Queue Table -->
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+                        <h3 class="font-bold text-xs uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-cart-arrow-down"></i> Reorder Queue
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-950 text-slate-400 font-bold uppercase text-[10px]">
+                                <tr>
+                                    <th class="p-3">Primary Subject</th>
+                                    <th class="p-3">Ordering Name / Link</th>
+                                    <th class="p-3">Location</th>
+                                    <th class="p-3 text-center">Qty Left</th>
+                                    <th class="p-3">Contact</th>
+                                    <th class="p-3 text-center">Order Status</th>
+                                    <th class="p-3 text-center">Est. Delivery</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reorderTableBody" class="divide-y divide-slate-800 text-slate-300">
+                                <!-- Dynamic reorder rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6: LIVE GOOGLE SHEETS SYNC PANEL -->
+            <section id="sec-sync" class="hidden space-y-6">
+                <div class="glass-panel p-6 rounded-2xl space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+                        <div>
+                            <div class="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-0.5 rounded-full text-xs font-bold mb-1">
+                                <i class="fa-solid fa-circle text-[8px] animate-pulse"></i> Sheet Linked
+                            </div>
+                            <h2 class="text-xl font-black text-white">Google Sheet Integration Hub</h2>
+                            <p class="text-xs text-slate-400 mt-1">Directly targeted to Brightmont Academy St. Charles Official Spreadsheet.</p>
+                        </div>
+                        <a href="https://docs.google.com/spreadsheets/d/1AVOthk_4lPCPi1zroepEjb19DozSYNyfwP2eifHjNr0/edit?gid=1289365460#gid=1289365460" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Google Sheet
+                        </a>
+                    </div>
+
+                    <!-- Setup Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Target Sheet GID</span>
+                            <p class="text-xs font-mono font-bold text-white">gid=1289365460</p>
+                        </div>
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Custom Column Schema</span>
+                            <p class="text-xs font-bold text-emerald-400">Exact 8 Custom Headers</p>
+                        </div>
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Sync Trigger Mode</span>
+                            <p class="text-xs font-bold text-sky-400">Auto Webhook on Edit</p>
+                        </div>
+                    </div>
+
+                    <!-- Apps Script Bridge Code Generator -->
+                    <div class="bg-slate-950 text-slate-200 rounded-xl p-5 space-y-3 border border-slate-800">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <h3 class="font-bold text-xs uppercase text-emerald-400 flex items-center gap-2">
+                                <i class="fa-solid fa-code"></i> Google Apps Script Bridge Code
+                            </h3>
+                            <button onclick="copyAppsScriptCode()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-copy"></i> Copy Code
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-400">
+                            Paste this code in Google Sheets (<span class="text-slate-200">Extensions &gt; Apps Script</span>) and deploy as a Web App (Execute as: <em>Me</em>, Access: <em>Anyone</em>) to write back data in real-time.
+                        </p>
+                        <pre id="appsScriptCode" class="bg-slate-900 p-4 rounded-lg font-mono text-[11px] text-emerald-300 overflow-x-auto border border-slate-800 max-h-48">
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.openById('1AVOthk_4lPCPi1zroepEjb19DozSYNyfwP2eifHjNr0').getSheetByName('Inventory') || SpreadsheetApp.openById('1AVOthk_4lPCPi1zroepEjb19DozSYNyfwP2eifHjNr0').getSheets()[0];
+    var data = JSON.parse(e.postData.contents);
+    sheet.clear();
+    
+    var headers = [
+      "Primary Subject Area",
+      "Ordering Name and/or link, if it applies",
+      "Description",
+      "Quantity",
+      "Rooms/Space Storing Them",
+      "Contact people",
+      "Consumable? Answer \"Yes\" or, if no, leave blank. If \"Yes,\" inform Meredith so that she can replace it.",
+      "Other notes"
+    ];
+    sheet.appendRow(headers);
+    
+    data.forEach(function(item) {
+      sheet.appendRow([
+        item.subject || '',
+        item.name || '',
+        item.description || '',
+        item.quantity || 0,
+        item.location || '',
+        item.contact || '',
+        (item.isConsumable === 'Yes' || item.isConsumable === true) ? 'Yes' : '',
+        item.notes || ''
+      ]);
+    });
+    
+    return ContentService.createTextOutput(JSON.stringify({status: "success"})).setMimeType(ContentService.MimeType.JSON);
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({status: "error", message: error.toString()})).setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                        <div class="flex flex-col sm:flex-row gap-2 pt-2">
+                            <input type="text" id="webhookUrlInput" placeholder="Paste deployed Web App URL here (https://script.google.com/macros/s/.../exec)" class="flex-1 bg-slate-900 border border-slate-800 text-white px-3 py-2 rounded-xl text-xs focus:outline-none focus:border-sky-500">
+                            <button onclick="saveWebhookUrl()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow transition">
+                                Save Webhook
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 7: VISUAL ANALYTICS & AUDIT REPORTS -->
+            <section id="sec-analytics" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-sky-400"></i> Visual Analytics & Audit Studio
+                    </h2>
+                    <button onclick="printAuditReport()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> Full Campus Audit Report
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="text-xs font-bold uppercase text-slate-300 mb-4">Quantity by Primary Subject Area</h3>
+                        <div class="h-64 relative">
+                            <canvas id="chartSubject"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="text-xs font-bold uppercase text-slate-300 mb-4">Units Per Room Storage Location</h3>
+                        <div class="h-64 relative">
+                            <canvas id="chartRoomUnits"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 8: DATA STUDIO (IMPORT / EXPORT / RESET) -->
+            <section id="sec-data" class="hidden space-y-6">
+                <div class="glass-panel p-6 rounded-2xl space-y-6">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-database text-sky-400"></i> Campus Data Studio
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Import, export, backup, or reset the local inventory database.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- CSV / JSON Export -->
+                        <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3">
+                            <h3 class="font-bold text-xs text-white uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-file-export text-emerald-400"></i> Export Data
+                            </h3>
+                            <p class="text-xs text-slate-400">Download formatted CSV matching the exact 8 headers or JSON file.</p>
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="exportToCSV()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition">
+                                    Export CSV
+                                </button>
+                                <button onclick="exportToJSON()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition">
+                                    Export JSON
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Duplicate-Aware Import -->
+                        <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3">
+                            <h3 class="font-bold text-xs text-white uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-file-import text-sky-400"></i> Import Data
+                            </h3>
+                            <p class="text-xs text-slate-400">Upload CSV file with duplicate handling rules.</p>
+                            <button onclick="openImportModal()" class="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow transition mt-2">
+                                Open Importer Tool
+                            </button>
+                        </div>
+
+                        <!-- Factory Reset -->
+                        <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3">
+                            <h3 class="font-bold text-xs text-white uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Database Reset
+                            </h3>
+                            <p class="text-xs text-slate-400">Restore default Brightmont Academy St. Charles inventory dataset.</p>
+                            <button onclick="confirmFactoryReset()" class="w-full py-2 bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs rounded-xl transition mt-2">
+                                Factory Reset Database
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- FLOATING BATCH ACTION BAR -->
+    <div id="floatingBatchBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 hidden bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex flex-wrap items-center gap-3 transition-all">
+        <span id="batchCountBadge" class="bg-sky-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">0 Selected</span>
+        <div class="h-4 w-px bg-slate-700 hidden sm:block"></div>
+        <div class="flex items-center gap-2">
+            <button onclick="batchDuplicate()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-200 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-copy text-indigo-400"></i> Duplicate
+            </button>
+            <button onclick="batchArchive(true)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-amber-300 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-box-archive"></i> Archive
+            </button>
+            <button onclick="batchArchive(false)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-emerald-300 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-box-open"></i> Unarchive
+            </button>
+            <button onclick="exportSelectedCSV()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-emerald-400 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <button onclick="batchDeletePrompt()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-xs font-semibold rounded-lg text-white transition flex items-center gap-1.5">
+                <i class="fa-solid fa-trash-can"></i> Delete
+            </button>
+        </div>
+        <button onclick="clearSelection()" class="text-slate-400 hover:text-white ml-1 text-xs">
+            <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+    </div>
+
+    <!-- MODAL 1: ADD / EDIT ITEM MODAL -->
+    <div id="modalItem" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center sticky top-0 z-10">
+                <h3 id="modalItemTitle" class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-sky-400"></i> Add Inventory Item
+                </h3>
+                <button onclick="closeModal('modalItem')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="itemForm" onsubmit="saveItemForm(event)" class="p-6 space-y-4">
+                <input type="hidden" id="formItemId">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">1. Primary Subject Area *</label>
+                        <input type="text" id="formSubject" required list="subjectSuggestions" placeholder="e.g. Science, Math, Reading, Art..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                        <datalist id="subjectSuggestions">
+                            <option value="Math"><option value="Science"><option value="Reading"><option value="English/Humanities">
+                            <option value="Social Studies"><option value="Art"><option value="Fitness/PE"><option value="Hygiene/Facility">
+                        </datalist>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">2. Ordering Name and/or Link *</label>
+                        <input type="text" id="formName" required placeholder="Item title or web purchase link" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">4. Quantity *</label>
+                        <input type="number" id="formQuantity" required min="0" value="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">5. Storage Room / Space *</label>
+                        <input type="text" id="formLocation" required list="locationSuggestions" placeholder="e.g. Room 5, Room 1, Kitchen Closet..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                        <datalist id="locationSuggestions">
+                            <option value="Room 1"><option value="Room 2"><option value="Room 4"><option value="Room 5">
+                            <option value="Room 6"><option value="Room 8"><option value="Kitchen Closet"><option value="Kitchen Cabinet Upper">
+                        </datalist>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Reorder Threshold</label>
+                        <input type="number" id="formThreshold" min="0" value="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">3. Description</label>
+                    <textarea id="formDescription" rows="2" placeholder="Item details, kit contents, specifications..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">6. Contact People</label>
+                        <input type="text" id="formContact" placeholder="e.g. Conboy, HWS, Dobie, Meredith..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-amber-400 mb-1">7. Consumable? (Informs Meredith)</label>
+                        <select id="formConsumable" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500 font-bold">
+                            <option value="No">No (Reusable item)</option>
+                            <option value="Yes">Yes (Requires replacement when low)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">8. Other Notes</label>
+                    <input type="text" id="formNotes" placeholder="Ownership details, personal property tags, special instructions..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Photo Image URL or File Upload</label>
+                    <div class="flex gap-2 items-center">
+                        <input type="text" id="formImageUrl" placeholder="https://..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-white">
+                        <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-upload"></i> Upload
+                            <input type="file" id="formFileInput" accept="image/*" onchange="handleImageUpload(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('modalItem')" class="px-4 py-2 border border-slate-800 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold shadow">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: DUPLICATE-AWARE IMPORT MODAL -->
+    <div id="modalImport" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-import text-sky-400"></i> Import Inventory File
+                </h3>
+                <button onclick="closeModal('modalImport')" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <div class="border-2 border-dashed border-slate-800 rounded-2xl p-6 text-center hover:border-sky-500 bg-slate-950 transition cursor-pointer" onclick="document.getElementById('csvFileInput').click()">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-sky-400 mb-2"></i>
+                    <p class="text-xs font-bold text-white">Click to select CSV or JSON file</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Parses exact 8 custom headers or mapped standard headers</p>
+                    <input type="file" id="csvFileInput" accept=".csv,.json" onchange="processCSVFile(event)" class="hidden">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Duplicate Strategy</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-800 hover:bg-slate-950 cursor-pointer text-xs">
+                            <input type="radio" name="dupStrategy" value="skip" checked class="text-sky-500 focus:ring-0">
+                            <div>
+                                <span class="font-bold text-white">Skip Duplicates</span>
+                                <p class="text-slate-500 text-[11px]">Ignore matching records (Name + Location match)</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-800 hover:bg-slate-950 cursor-pointer text-xs">
+                            <input type="radio" name="dupStrategy" value="overwrite" class="text-sky-500 focus:ring-0">
+                            <div>
+                                <span class="font-bold text-white">Overwrite Existing</span>
+                                <p class="text-slate-500 text-[11px]">Update quantities and details on matching records</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-800 hover:bg-slate-950 cursor-pointer text-xs">
+                            <input type="radio" name="dupStrategy" value="append" class="text-sky-500 focus:ring-0">
+                            <div>
+                                <span class="font-bold text-white">Import All</span>
+                                <p class="text-slate-500 text-[11px]">Create new records for all imported rows</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="importSummary" class="hidden p-3 rounded-xl text-xs"></div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="closeModal('modalImport')" class="px-4 py-2 border border-slate-800 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800">Cancel</button>
+                    <button id="btnExecuteImport" onclick="executeImport()" disabled class="px-5 py-2 bg-emerald-600 opacity-50 cursor-not-allowed hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow">Execute Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: LIGHTBOX MODAL -->
+    <div id="modalLightbox" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeModal('modalLightbox')">
+        <div class="relative max-w-3xl w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800" onclick="event.stopPropagation()">
+            <button onclick="closeModal('modalLightbox')" class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="p-2 flex items-center justify-center bg-black min-h-[300px]">
+                <img id="lightboxImg" src="" class="max-h-[70vh] object-contain rounded">
+            </div>
+            <div class="p-4 bg-slate-900 text-white">
+                <h4 id="lightboxTitle" class="font-bold text-base"></h4>
+                <p id="lightboxSub" class="text-xs text-slate-400 mt-1"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: CUSTOM CONFIRMATION MODAL -->
+    <div id="modalConfirm" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4">
+            <div class="flex items-center space-x-3 text-rose-400">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                <h3 id="confirmModalTitle" class="font-bold text-base text-white">Confirm Action</h3>
+            </div>
+            <p id="confirmModalMessage" class="text-xs text-slate-300 leading-relaxed"></p>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeModal('modalConfirm')" class="px-4 py-2 border border-slate-800 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800">Cancel</button>
+                <button id="confirmModalExecuteBtn" class="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINTABLE REPORT HIDDEN SECTION -->
+    <div id="printableSection" class="hidden"></div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- APP SCRIPT LOGIC -->
+    <script>
+        // EXACT 8 CUSTOM HEADERS
+        const EXACT_HEADERS = [
+            "Primary Subject Area",
+            "Ordering Name and/or link, if it applies",
+            "Description",
+            "Quantity",
+            "Rooms/Space Storing Them",
+            "Contact people",
+            'Consumable? Answer "Yes" or, if no, leave blank. If "Yes," inform Meredith so that she can replace it.',
+            "Other notes"
+        ];
+
+        // PRE-LOADED DATASET (BRIGHTMONT ACADEMY ST. CHARLES)
+        const SEED_DATA = [
+            {
+                id: 'item-1',
+                subject: 'Math',
+                name: 'Math Dice Set (10-sided, 6-sided, math symbols)',
+                description: '10 sided (14), math symbols (20), 6 sided (2)',
+                quantity: 36,
+                location: 'Room 1',
+                contact: 'HWS',
+                isConsumable: 'No',
+                reorderThreshold: 5,
+                notes: 'Math manipulative station',
+                imageUrl: 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=300&auto=format&fit=crop&q=80',
+                isArchived: false,
+                orderStatus: 'None',
+                deliveryDate: ''
+            },
+            {
+                id: 'item-2',
+                subject: 'Science',
+                name: 'Digital Scale (Precision 0.01g)',
+                description: 'High precision balance for chemistry and physics experiments',
+                quantity: 2,
+                location: 'Room 5',
+                contact: 'Conboy',
+                isConsumable: 'No',
+                reorderThreshold: 1,
+                notes: 'personal property',
+                imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=300&auto=format&fit=crop&q=80',
+                isArchived: false,
+                orderStatus: 'None',
+                deliveryDate: ''
+            },
+            {
+                id: 'item-3',
+                subject: 'Science',
+                name: 'Kidney Beans Bag (Genetics Lab)',
+                description: 'Red and white kidney beans for genetics allele labs',
+                quantity: 1,
+                location: 'Room 5',
+                contact: 'Conboy',
+                isConsumable: 'Yes',
+                reorderThreshold: 2,
+                notes: 'Depleted for biology unit - notify Meredith',
+                imageUrl: '',
+                isArchived: false,
+                orderStatus: 'Needs Order',
+                deliveryDate: '2026-11-05'
+            },
+            {
+                id: 'item-4',
+                subject: 'Art',
+                name: 'Caliart Acrylic Paints (36 Colors Set)',
+                description: 'Assorted primary & secondary non-toxic acrylic colors',
+                quantity: 1,
+                location: 'Common Area / Art Island',
+                contact: 'Paz',
+                isConsumable: 'Yes',
+                reorderThreshold: 1,
+                notes: 'Located behind table',
+                imageUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=300&auto=format&fit=crop&q=80',
+                isArchived: false,
+                orderStatus: 'Order Placed',
+                deliveryDate: '2026-11-02'
+            },
+            {
+                id: 'item-5',
+                subject: 'Reading',
+                name: 'Dandelion Readers Series (Level 1 Vowel Spellings)',
+                description: 'Structured literacy readers for dyslexia and early readers',
+                quantity: 4,
+                location: 'Room 4',
+                contact: 'Fonte',
+                isConsumable: 'No',
+                reorderThreshold: 2,
+                notes: 'Bookcase by Room 4',
+                imageUrl: '',
+                isArchived: false,
+                orderStatus: 'None',
+                deliveryDate: ''
+            },
+            {
+                id: 'item-6',
+                subject: 'Hygiene/Facility',
+                name: 'Toilet Paper Cases & Paper Towel Rolls',
+                description: 'Bulk campus facility maintenance paper products',
+                quantity: 1,
+                location: 'Kitchen Closet',
+                contact: 'Meredith',
+                isConsumable: 'Yes',
+                reorderThreshold: 2,
+                notes: 'Inform Meredith when case is half empty',
+                imageUrl: '',
+                isArchived: false,
+                orderStatus: 'Needs Order',
+                deliveryDate: ''
+            },
+            {
+                id: 'item-7',
+                subject: 'Science',
+                name: 'Earth Science Experiment Lab Kits',
+                description: 'Rock classification, soil samples, and mineral streak plates',
+                quantity: 2,
+                location: 'Room 8',
+                contact: 'Oloris',
+                isConsumable: 'No',
+                reorderThreshold: 1,
+                notes: 'Stored in Room 8 cabinet',
+                imageUrl: '',
+                isArchived: false,
+                orderStatus: 'None',
+                deliveryDate: ''
+            },
+            {
+                id: 'item-8',
+                subject: 'Fitness/PE',
+                name: 'Foam Dodgeballs & Jump Ropes',
+                description: 'Indoor physical education recreational kit',
+                quantity: 12,
+                location: 'Room 6',
+                contact: 'Staff',
+                isConsumable: 'No',
+                reorderThreshold: 4,
+                notes: 'PE closet',
+                imageUrl: '',
+                isArchived: false,
+                orderStatus: 'None',
+                deliveryDate: ''
+            }
+        ];
+
+        // STATE APP VARIABLES
+        let inventory = [];
+        let selectedIds = new Set();
+        let inventoryViewMode = 'table';
+        let webhookUrl = localStorage.getItem('brightmont_webhook_url') || '';
+        let parsedCSVRows = [];
+        let activityLog = JSON.parse(localStorage.getItem('brightmont_activity_log') || '[]');
+        
+        let chartSubjectInstance = null;
+        let chartRoomUnitsInstance = null;
+        let chartStockHealthInstance = null;
+
+        // INIT APP
+        window.addEventListener('DOMContentLoaded', () => {
+            loadInventory();
+            populateDropdownFilters();
+            applyInventoryFilters();
+            updateLiveClock();
+            setInterval(updateLiveClock, 1000);
+            renderDashboard();
+
+            if (webhookUrl) {
+                document.getElementById('webhookUrlInput').value = webhookUrl;
+            }
+        });
+
+        // LIVE ST CHARLES CLOCK
+        function updateLiveClock() {
+            const options = { timeZone: 'America/Chicago', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const timeStr = new Intl.DateTimeFormat('en-US', options).format(new Date());
+            const clockEl = document.getElementById('stCharlesTime');
+            if (clockEl) clockEl.innerText = `${timeStr} CT`;
+        }
+
+        // LOCAL STORAGE & PERSISTENCE
+        function loadInventory() {
+            const stored = localStorage.getItem('brightmont_smart_hub_v1');
+            if (stored) {
+                try {
+                    inventory = JSON.parse(stored);
+                } catch(e) {
+                    inventory = [...SEED_DATA];
+                }
+            } else {
+                inventory = [...SEED_DATA];
+                saveInventory(false);
+            }
+        }
+
+        function saveInventory(triggerWebhook = true) {
+            localStorage.setItem('brightmont_smart_hub_v1', JSON.stringify(inventory));
+            localStorage.setItem('brightmont_activity_log', JSON.stringify(activityLog.slice(0, 20)));
+            populateDropdownFilters();
+            updateBadgeCounters();
+            
+            if (triggerWebhook && webhookUrl) {
+                sendWebhookData();
+            }
+        }
+
+        function logActivity(action) {
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            activityLog.unshift(`[${timeStr}] ${action}`);
+            if (activityLog.length > 20) activityLog.pop();
+        }
+
+        // NAVIGATION TABS
+        function switchTab(tab) {
+            const sections = ['hub', 'dashboard', 'inventory', 'rooms', 'reorder', 'sync', 'analytics', 'data'];
+            sections.forEach(s => {
+                const sec = document.getElementById(`sec-${s}`);
+                const navBtn = document.getElementById(`nav-${s}`);
+                if (s === tab) {
+                    sec?.classList.remove('hidden');
+                    if (navBtn) navBtn.className = "nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-white bg-sky-600 font-bold shadow-md shadow-sky-600/30";
+                } else {
+                    sec?.classList.add('hidden');
+                    if (navBtn) navBtn.className = "nav-item w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-slate-800/80";
+                }
+            });
+
+            if (tab === 'dashboard') renderDashboard();
+            if (tab === 'rooms') renderRoomExplorer();
+            if (tab === 'reorder') renderReorderDesk();
+            if (tab === 'analytics') renderAnalytics();
+        }
+
+        function toggleSidebarMobile() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // DROPDOWN FILTERS
+        function populateDropdownFilters() {
+            const subSelect = document.getElementById('filterSubject');
+            const roomSelect = document.getElementById('filterRoom');
+
+            const currSub = subSelect.value;
+            const currRoom = roomSelect.value;
+
+            const subjects = [...new Set(inventory.map(i => i.subject).filter(Boolean))].sort();
+            const rooms = [...new Set(inventory.map(i => i.location).filter(Boolean))].sort();
+
+            subSelect.innerHTML = '<option value="">All Primary Subjects</option>' + 
+                subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+            roomSelect.innerHTML = '<option value="">All Rooms / Spaces</option>' + 
+                rooms.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+
+            subSelect.value = currSub;
+            roomSelect.value = currRoom;
+        }
+
+        function getFilteredInventory() {
+            const search = (document.getElementById('inventorySearchInput').value || '').toLowerCase().trim();
+            const subject = document.getElementById('filterSubject').value;
+            const room = document.getElementById('filterRoom').value;
+            const consumable = document.getElementById('filterConsumable').value;
+            const stockHealth = document.getElementById('filterStockHealth').value;
+
+            return inventory.filter(i => {
+                if (stockHealth === 'archived') {
+                    if (!i.isArchived) return false;
+                } else {
+                    if (i.isArchived) return false;
+                }
+
+                if (subject && i.subject !== subject) return false;
+                if (room && i.location !== room) return false;
+
+                const isCons = i.isConsumable === 'Yes' || i.isConsumable === true;
+                if (consumable === 'Yes' && !isCons) return false;
+                if (consumable === 'No' && isCons) return false;
+
+                const thresh = i.reorderThreshold || 2;
+                if (stockHealth === 'low' && (i.quantity > thresh || i.quantity === 0)) return false;
+                if (stockHealth === 'out' && i.quantity > 0) return false;
+                if (stockHealth === 'ok' && i.quantity <= thresh) return false;
+
+                if (search) {
+                    const matchText = `${i.subject} ${i.name} ${i.location} ${i.description} ${i.contact} ${i.notes}`.toLowerCase();
+                    if (!matchText.includes(search)) return false;
+                }
+
+                return true;
+            });
+        }
+
+        function applyInventoryFilters() {
+            const filtered = getFilteredInventory();
+            document.getElementById('filteredResultsBadge').innerText = `Showing ${filtered.length} of ${inventory.length} records`;
+            
+            renderInventoryTable(filtered);
+            renderInventoryCards(filtered);
+            updateBatchBar();
+        }
+
+        function resetInventoryFilters() {
+            document.getElementById('inventorySearchInput').value = '';
+            document.getElementById('filterSubject').value = '';
+            document.getElementById('filterRoom').value = '';
+            document.getElementById('filterConsumable').value = '';
+            document.getElementById('filterStockHealth').value = '';
+            applyInventoryFilters();
+        }
+
+        function setInventoryViewMode(mode) {
+            inventoryViewMode = mode;
+            const tbl = document.getElementById('inventoryTableView');
+            const crd = document.getElementById('inventoryCardsView');
+            const btnTbl = document.getElementById('btnViewTable');
+            const btnCrd = document.getElementById('btnViewCards');
+
+            if (mode === 'table') {
+                tbl.classList.remove('hidden');
+                crd.classList.add('hidden');
+                btnTbl.className = "px-3 py-1 text-xs font-bold rounded-lg bg-sky-600 text-white transition";
+                btnCrd.className = "px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+            } else {
+                tbl.classList.add('hidden');
+                crd.classList.remove('hidden');
+                btnCrd.className = "px-3 py-1 text-xs font-bold rounded-lg bg-sky-600 text-white transition";
+                btnTbl.className = "px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+            }
+        }
+
+        // RENDER INVENTORY TABLE
+        function renderInventoryTable(items) {
+            const tbody = document.getElementById('inventoryTableBody');
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-500">No records match the active criteria.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(i => {
+                const isSel = selectedIds.has(i.id);
+                const isCons = i.isConsumable === 'Yes' || i.isConsumable === true;
+                const isLow = i.quantity <= (i.reorderThreshold || 2);
+
+                return `
+                <tr class="hover:bg-slate-900/60 transition ${isSel ? 'bg-sky-950/40' : ''}">
+                    <td class="p-3 text-center">
+                        <input type="checkbox" onchange="toggleSelectItem('${i.id}', this.checked)" ${isSel ? 'checked' : ''} class="rounded border-slate-700 bg-slate-950 text-sky-500 focus:ring-0">
+                    </td>
+                    <td class="p-3 text-center">
+                        ${i.imageUrl ? 
+                            `<img src="${escapeHtml(i.imageUrl)}" onclick="openLightbox('${escapeHtml(i.imageUrl)}', '${escapeHtml(i.name)}', '${escapeHtml(i.location)}')" class="w-8 h-8 object-cover rounded-lg border border-slate-700 cursor-pointer hover:scale-110 transition mx-auto">` :
+                            `<div class="w-8 h-8 rounded-lg bg-slate-950 text-slate-400 flex items-center justify-center text-xs border border-slate-800 mx-auto">
+                                <i class="${getSubjectIcon(i.subject)}"></i>
+                            </div>`
+                        }
+                    </td>
+                    <td class="p-3 font-semibold text-white">
+                        <span class="inline-block px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800 text-[10px] font-bold">${escapeHtml(i.subject)}</span>
+                    </td>
+                    <td class="p-3 font-bold text-white">
+                        ${escapeHtml(i.name)}
+                        ${i.description ? `<p class="text-[11px] text-slate-400 font-normal line-clamp-1 mt-0.5">${escapeHtml(i.description)}</p>` : ''}
+                    </td>
+                    <td class="p-3 text-slate-300">
+                        <i class="fa-solid fa-location-dot text-slate-500 mr-1"></i>${escapeHtml(i.location)}
+                    </td>
+                    <td class="p-3 text-center whitespace-nowrap">
+                        <div class="inline-flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-xl border border-slate-800">
+                            <button onclick="adjustQty('${i.id}', -1)" class="w-5 h-5 bg-slate-800 hover:bg-slate-700 text-white rounded font-bold text-xs">-</button>
+                            <span class="px-1 font-bold ${isLow ? 'text-amber-400' : 'text-white'}">${i.quantity}</span>
+                            <button onclick="adjustQty('${i.id}', 1)" class="w-5 h-5 bg-slate-800 hover:bg-slate-700 text-white rounded font-bold text-xs">+</button>
+                        </div>
+                    </td>
+                    <td class="p-3 text-center">
+                        ${isCons ? 
+                            `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950/60 text-amber-300 border border-amber-800">
+                                Yes
+                            </span>` : 
+                            `<span class="text-slate-500">No</span>`
+                        }
+                    </td>
+                    <td class="p-3 text-slate-300">${escapeHtml(i.contact || '-')}</td>
+                    <td class="p-3 text-right space-x-1 whitespace-nowrap">
+                        <button onclick="openEditModal('${i.id}')" title="Edit" class="p-1.5 text-slate-400 hover:text-sky-400"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="duplicateItem('${i.id}')" title="Duplicate" class="p-1.5 text-slate-400 hover:text-indigo-400"><i class="fa-solid fa-copy"></i></button>
+                        <button onclick="deleteSinglePrompt('${i.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        // RENDER INVENTORY CARDS
+        function renderInventoryCards(items) {
+            const container = document.getElementById('inventoryCardsView');
+            if (items.length === 0) {
+                container.innerHTML = '<div class="col-span-full p-8 text-center text-slate-500">No records match the active criteria.</div>';
+                return;
+            }
+
+            container.innerHTML = items.map(i => {
+                const isSel = selectedIds.has(i.id);
+                const isCons = i.isConsumable === 'Yes' || i.isConsumable === true;
+                const isLow = i.quantity <= (i.reorderThreshold || 2);
+
+                return `
+                <div class="glass-panel p-4 rounded-2xl border ${isSel ? 'border-sky-500' : 'border-slate-800'} space-y-3 flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <input type="checkbox" onchange="toggleSelectItem('${i.id}', this.checked)" ${isSel ? 'checked' : ''} class="rounded border-slate-700 bg-slate-950 text-sky-500 focus:ring-0">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950 text-slate-300 border border-slate-800">${escapeHtml(i.subject)}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            ${i.imageUrl ? 
+                                `<img src="${escapeHtml(i.imageUrl)}" onclick="openLightbox('${escapeHtml(i.imageUrl)}', '${escapeHtml(i.name)}', '${escapeHtml(i.location)}')" class="w-10 h-10 object-cover rounded-xl border border-slate-700 cursor-pointer hover:scale-105 transition flex-shrink-0">` :
+                                `<div class="w-10 h-10 rounded-xl bg-slate-950 text-slate-400 flex items-center justify-center text-sm border border-slate-800 flex-shrink-0">
+                                    <i class="${getSubjectIcon(i.subject)}"></i>
+                                </div>`
+                            }
+                            <div>
+                                <h4 class="font-bold text-xs text-white leading-tight">${escapeHtml(i.name)}</h4>
+                                <p class="text-[10px] text-slate-400 mt-0.5"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(i.location)}</p>
+                            </div>
+                        </div>
+                        ${i.description ? `<p class="text-[11px] text-slate-400 line-clamp-2">${escapeHtml(i.description)}</p>` : ''}
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
+                        <div class="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-xl border border-slate-800">
+                            <button onclick="adjustQty('${i.id}', -1)" class="w-5 h-5 bg-slate-800 text-white rounded font-bold">-</button>
+                            <span class="px-1 font-bold ${isLow ? 'text-amber-400' : 'text-white'}">${i.quantity}</span>
+                            <button onclick="adjustQty('${i.id}', 1)" class="w-5 h-5 bg-slate-800 text-white rounded font-bold">+</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openEditModal('${i.id}')" class="text-slate-400 hover:text-sky-400"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteSinglePrompt('${i.id}')" class="text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function adjustQty(id, delta) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                item.quantity = Math.max(0, Number(item.quantity) + delta);
+                logActivity(`Adjusted qty for "${item.name}" to ${item.quantity}`);
+                saveInventory(true);
+                applyInventoryFilters();
+            }
+        }
+
+        // EXECUTIVE DASHBOARD RENDER
+        function renderDashboard() {
+            const active = inventory.filter(i => !i.isArchived);
+            const totalItems = active.length;
+            const totalUnits = active.reduce((sum, i) => sum + Number(i.quantity), 0);
+            const consumables = active.filter(i => i.isConsumable === 'Yes' || i.isConsumable === true).length;
+            const lowStock = active.filter(i => i.quantity <= (i.reorderThreshold || 2)).length;
+            const roomsCount = new Set(active.map(i => i.location).filter(Boolean)).size;
+
+            document.getElementById('dashTotalItems').innerText = totalItems;
+            document.getElementById('dashTotalUnits').innerText = totalUnits;
+            document.getElementById('dashConsumables').innerText = consumables;
+            document.getElementById('dashLowStock').innerText = lowStock;
+            document.getElementById('dashTotalRooms').innerText = roomsCount;
+
+            // Hub Featured Items
+            const hubItems = document.getElementById('hubFeaturedItems');
+            hubItems.innerHTML = active.slice(0, 4).map(i => `
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                    <div>
+                        <p class="font-bold text-white">${escapeHtml(i.name)}</p>
+                        <p class="text-slate-400 text-[10px]">${escapeHtml(i.location)} • ${escapeHtml(i.subject)}</p>
+                    </div>
+                    <span class="font-bold px-2 py-1 rounded bg-slate-900 border border-slate-800 text-sky-400">Qty: ${i.quantity}</span>
+                </div>
+            `).join('');
+
+            // Low Stock Alert List
+            const alertList = document.getElementById('dashAlertList');
+            const alertItems = active.filter(i => i.quantity <= (i.reorderThreshold || 2));
+
+            if (alertItems.length === 0) {
+                alertList.innerHTML = '<p class="text-xs text-slate-500 py-2">All inventory levels are fully stocked!</p>';
+            } else {
+                alertList.innerHTML = alertItems.map(i => `
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                            <span class="font-bold text-white">${escapeHtml(i.name)}</span>
+                            <span class="text-slate-500 text-[10px]">(${escapeHtml(i.location)})</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-amber-400">Qty: ${i.quantity}</span>
+                            <button onclick="switchTab('reorder')" class="px-2 py-0.5 bg-sky-600/30 text-sky-300 border border-sky-500/30 rounded text-[10px] font-bold">Restock</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Activity Log
+            const logEl = document.getElementById('dashActivityLog');
+            if (activityLog.length === 0) {
+                logEl.innerHTML = '<p class="text-slate-500">No recent activity recorded.</p>';
+            } else {
+                logEl.innerHTML = activityLog.slice(0, 5).map(l => `<p>&bull; ${escapeHtml(l)}</p>`).join('');
+            }
+
+            // Stock Health Chart
+            const okCount = active.filter(i => i.quantity > (i.reorderThreshold || 2)).length;
+            const lowCount = active.filter(i => i.quantity > 0 && i.quantity <= (i.reorderThreshold || 2)).length;
+            const outCount = active.filter(i => i.quantity === 0).length;
+
+            const ctx = document.getElementById('dashStockHealthChart').getContext('2d');
+            if (chartStockHealthInstance) chartStockHealthInstance.destroy();
+            chartStockHealthInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+                    datasets: [{
+                        data: [okCount, lowCount, outCount],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } } }
+            });
+        }
+
+        // ROOM EXPLORER VIEW
+        function renderRoomExplorer() {
+            const grid = document.getElementById('roomExplorerGrid');
+            const search = (document.getElementById('roomExplorerSearch')?.value || '').toLowerCase().trim();
+
+            const grouped = {};
+            inventory.forEach(i => {
+                if (i.isArchived) return;
+                const loc = i.location || 'Unassigned Space';
+                if (!grouped[loc]) grouped[loc] = [];
+                grouped[loc].push(i);
+            });
+
+            const rooms = Object.keys(grouped).sort();
+
+            grid.innerHTML = rooms.map(room => {
+                let items = grouped[room];
+                if (search) {
+                    items = items.filter(i => `${i.name} ${i.subject} ${i.description}`.toLowerCase().includes(search));
+                }
+                if (items.length === 0 && search) return '';
+
+                const totalUnits = items.reduce((sum, i) => sum + Number(i.quantity), 0);
+
+                return `
+                <div class="glass-panel p-4 rounded-2xl space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-door-open text-sky-400"></i>
+                            <h3 class="font-bold text-xs text-white">${escapeHtml(room)}</h3>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-950 text-sky-400 border border-slate-800">
+                            ${items.length} Items (${totalUnits} Units)
+                        </span>
+                    </div>
+                    <div class="space-y-1 max-h-56 overflow-y-auto pr-1">
+                        ${items.map(i => `
+                            <div class="p-2 bg-slate-950 rounded-xl border border-slate-800/80 flex justify-between items-center text-xs">
+                                <div>
+                                    <p class="font-semibold text-white">${escapeHtml(i.name)}</p>
+                                    <p class="text-[10px] text-slate-500">${escapeHtml(i.subject)}</p>
+                                </div>
+                                <span class="font-bold text-xs text-slate-300">Qty: ${i.quantity}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function printRoomManifest() {
+            const printable = document.getElementById('printableSection');
+            printable.innerHTML = `
+                <div style="padding: 20px; font-family: sans-serif;">
+                    <h2 style="margin-bottom: 5px;">Brightmont Academy St. Charles - Room Storage Manifest</h2>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Generated on ${new Date().toLocaleDateString()}</p>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;" border="1" cellpadding="6">
+                        <thead>
+                            <tr style="background: #f1f5f9;">
+                                <th>Room / Space</th>
+                                <th>Subject</th>
+                                <th>Item Title</th>
+                                <th>Quantity</th>
+                                <th>Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${inventory.filter(i => !i.isArchived).map(i => `
+                                <tr>
+                                    <td>${escapeHtml(i.location)}</td>
+                                    <td>${escapeHtml(i.subject)}</td>
+                                    <td>${escapeHtml(i.name)}</td>
+                                    <td>${i.quantity}</td>
+                                    <td>${escapeHtml(i.contact || '-')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            window.print();
+        }
+
+        // REORDER DESK VIEW
+        function renderReorderDesk() {
+            const tbody = document.getElementById('reorderTableBody');
+            const items = inventory.filter(i => !i.isArchived && ((i.isConsumable === 'Yes' || i.isConsumable === true) || i.quantity <= (i.reorderThreshold || 2)));
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-500">No consumable reorder items currently required.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(i => `
+                <tr class="hover:bg-slate-900/60 transition">
+                    <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-950 text-slate-300 font-bold border border-slate-800">${escapeHtml(i.subject)}</span></td>
+                    <td class="p-3 font-bold text-white">${escapeHtml(i.name)}</td>
+                    <td class="p-3 text-slate-400">${escapeHtml(i.location)}</td>
+                    <td class="p-3 text-center font-bold text-amber-400">${i.quantity}</td>
+                    <td class="p-3 text-slate-400">${escapeHtml(i.contact || 'Meredith')}</td>
+                    <td class="p-3 text-center">
+                        <select onchange="updateOrderStatus('${i.id}', this.value)" class="bg-slate-950 border border-slate-800 text-white text-xs rounded p-1 font-bold">
+                            <option value="Needs Order" ${i.orderStatus === 'Needs Order' ? 'selected' : ''}>Needs Order</option>
+                            <option value="Order Placed" ${i.orderStatus === 'Order Placed' ? 'selected' : ''}>Order Placed</option>
+                            <option value="Restocked" ${i.orderStatus === 'Restocked' ? 'selected' : ''}>Restocked</option>
+                        </select>
+                    </td>
+                    <td class="p-3 text-center">
+                        <input type="date" value="${i.deliveryDate || ''}" onchange="updateDeliveryDate('${i.id}', this.value)" class="bg-slate-950 border border-slate-800 text-white text-[11px] p-1 rounded">
+                    </td>
+                    <td class="p-3 text-right">
+                        <a href="mailto:meredithhale@brightmontacademy.com?subject=Consumable%20Restock:%20${encodeURIComponent(i.name)}&body=Hi%20Meredith,%0A%0APlease%20reorder%20the%20following%20consumable%20item%20for%20Brightmont%20St.%20Charles:%0A%0AItem:%20${encodeURIComponent(i.name)}%0ALocation:%20${encodeURIComponent(i.location)}%0ACurrent%20Qty:%20${i.quantity}" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded font-bold text-xs inline-flex items-center gap-1">
+                            <i class="fa-solid fa-envelope"></i> Email Meredith
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateOrderStatus(id, status) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                item.orderStatus = status;
+                logActivity(`Updated order status of "${item.name}" to ${status}`);
+                saveInventory(true);
+                showToast(`Status updated to ${status}`);
+            }
+        }
+
+        function updateDeliveryDate(id, dateStr) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                item.deliveryDate = dateStr;
+                saveInventory(true);
+                showToast(`Delivery date updated`);
+            }
+        }
+
+        function openPrintablePOModal() {
+            const printable = document.getElementById('printableSection');
+            const poItems = inventory.filter(i => !i.isArchived && ((i.isConsumable === 'Yes' || i.isConsumable === true) || i.quantity <= (i.reorderThreshold || 2)));
+
+            printable.innerHTML = `
+                <div style="padding: 25px; font-family: sans-serif; color: #1e293b;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 15px; margin-bottom: 20px;">
+                        <div>
+                            <h2 style="margin:0; font-size: 22px;">BRIGHTMONT ACADEMY</h2>
+                            <p style="margin: 3px 0; font-size: 12px; font-weight: bold; color: #64748b;">St. Charles Campus - Consumable Purchase Order Requisition</p>
+                        </div>
+                        <div style="text-align: right; font-size: 11px;">
+                            <p style="margin:0;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                            <p style="margin:0;"><strong>Attention:</strong> Meredith Hale (Supply Director)</p>
+                        </div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;" border="1" cellpadding="6">
+                        <thead>
+                            <tr style="background: #f8fafc;">
+                                <th>Subject</th>
+                                <th>Item Title</th>
+                                <th>Qty Left</th>
+                                <th>Storage Location</th>
+                                <th>Contact Person</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${poItems.map(i => `
+                                <tr>
+                                    <td>${escapeHtml(i.subject)}</td>
+                                    <td>${escapeHtml(i.name)}</td>
+                                    <td>${i.quantity}</td>
+                                    <td>${escapeHtml(i.location)}</td>
+                                    <td>${escapeHtml(i.contact || 'Meredith')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            window.print();
+        }
+
+        // VISUAL ANALYTICS RENDER
+        function renderAnalytics() {
+            const active = inventory.filter(i => !i.isArchived);
+
+            // Subject Chart
+            const subMap = {};
+            active.forEach(i => subMap[i.subject] = (subMap[i.subject] || 0) + Number(i.quantity));
+            
+            const ctxSub = document.getElementById('chartSubject').getContext('2d');
+            if (chartSubjectInstance) chartSubjectInstance.destroy();
+            chartSubjectInstance = new Chart(ctxSub, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(subMap),
+                    datasets: [{ label: 'Units', data: Object.values(subMap), backgroundColor: '#0ea5e9', borderRadius: 6 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+            });
+
+            // Room Units Chart
+            const roomMap = {};
+            active.forEach(i => roomMap[i.location] = (roomMap[i.location] || 0) + Number(i.quantity));
+
+            const ctxRoom = document.getElementById('chartRoomUnits').getContext('2d');
+            if (chartRoomUnitsInstance) chartRoomUnitsInstance.destroy();
+            chartRoomUnitsInstance = new Chart(ctxRoom, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(roomMap),
+                    datasets: [{ data: Object.values(roomMap), backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#6366f1', '#f43f5e', '#8b5cf6'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } } }
+            });
+        }
+
+        function printAuditReport() {
+            printRoomManifest();
+        }
+
+        // BATCH SELECTION & ACTIONS
+        function toggleSelectItem(id, checked) {
+            if (checked) selectedIds.add(id);
+            else selectedIds.delete(id);
+            updateBatchBar();
+        }
+
+        function toggleSelectAll(master) {
+            const filtered = getFilteredInventory();
+            if (master.checked) filtered.forEach(i => selectedIds.add(i.id));
+            else selectedIds.clear();
+            applyInventoryFilters();
+        }
+
+        function clearSelection() {
+            selectedIds.clear();
+            const master = document.getElementById('selectAllCheckbox');
+            if (master) master.checked = false;
+            applyInventoryFilters();
+        }
+
+        function updateBatchBar() {
+            const bar = document.getElementById('floatingBatchBar');
+            const badge = document.getElementById('batchCountBadge');
+            if (selectedIds.size > 0) {
+                bar.classList.remove('hidden');
+                badge.innerText = `${selectedIds.size} Selected`;
+            } else {
+                bar.classList.add('hidden');
+            }
+        }
+
+        function batchDeletePrompt() {
+            openConfirmModal(`Permanently delete ${selectedIds.size} selected record(s)?`, () => {
+                inventory = inventory.filter(i => !selectedIds.has(i.id));
+                logActivity(`Bulk deleted ${selectedIds.size} records`);
+                saveInventory(true);
+                clearSelection();
+                showToast('Selected records deleted');
+            });
+        }
+
+        function batchArchive(status) {
+            inventory.forEach(i => {
+                if (selectedIds.has(i.id)) i.isArchived = status;
+            });
+            logActivity(`Bulk ${status ? 'archived' : 'unarchived'} ${selectedIds.size} records`);
+            saveInventory(true);
+            clearSelection();
+            showToast(status ? 'Records archived' : 'Records restored');
+        }
+
+        function batchDuplicate() {
+            const dupes = [];
+            inventory.forEach(i => {
+                if (selectedIds.has(i.id)) {
+                    dupes.push({ ...i, id: 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000), name: `${i.name} (Copy)` });
+                }
+            });
+            inventory.push(...dupes);
+            logActivity(`Duplicated ${dupes.length} records`);
+            saveInventory(true);
+            clearSelection();
+            showToast(`Duplicated ${dupes.length} records`);
+        }
+
+        function exportSelectedCSV() {
+            const selected = inventory.filter(i => selectedIds.has(i.id));
+            generateCSVDownload(selected, `Brightmont_Selected_Export_${new Date().toISOString().slice(0, 10)}.csv`);
+        }
+
+        function duplicateItem(id) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                const dup = { ...item, id: 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000), name: `${item.name} (Copy)` };
+                inventory.push(dup);
+                logActivity(`Duplicated "${item.name}"`);
+                saveInventory(true);
+                applyInventoryFilters();
+                showToast(`Duplicated "${item.name}"`);
+            }
+        }
+
+        function deleteSinglePrompt(id) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                openConfirmModal(`Delete item "${item.name}"?`, () => {
+                    inventory = inventory.filter(i => i.id !== id);
+                    logActivity(`Deleted "${item.name}"`);
+                    saveInventory(true);
+                    applyInventoryFilters();
+                    showToast('Item deleted');
+                });
+            }
+        }
+
+        // ADD / EDIT ITEM MODAL
+        function openAddItemModal() {
+            document.getElementById('modalItemTitle').innerText = 'Add Inventory Item';
+            document.getElementById('formItemId').value = '';
+            document.getElementById('itemForm').reset();
+            document.getElementById('modalItem').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const item = inventory.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('modalItemTitle').innerText = 'Edit Inventory Record';
+            document.getElementById('formItemId').value = item.id;
+            document.getElementById('formSubject').value = item.subject || '';
+            document.getElementById('formName').value = item.name || '';
+            document.getElementById('formDescription').value = item.description || '';
+            document.getElementById('formQuantity').value = item.quantity;
+            document.getElementById('formLocation').value = item.location || '';
+            document.getElementById('formThreshold').value = item.reorderThreshold || 2;
+            document.getElementById('formContact').value = item.contact || '';
+            document.getElementById('formConsumable').value = (item.isConsumable === 'Yes' || item.isConsumable === true) ? 'Yes' : 'No';
+            document.getElementById('formNotes').value = item.notes || '';
+            document.getElementById('formImageUrl').value = item.imageUrl || '';
+
+            document.getElementById('modalItem').classList.remove('hidden');
+        }
+
+        function saveItemForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('formItemId').value;
+            const subject = document.getElementById('formSubject').value.trim();
+            const name = document.getElementById('formName').value.trim();
+            const description = document.getElementById('formDescription').value.trim();
+            const quantity = parseInt(document.getElementById('formQuantity').value, 10) || 0;
+            const location = document.getElementById('formLocation').value.trim();
+            const threshold = parseInt(document.getElementById('formThreshold').value, 10) || 2;
+            const contact = document.getElementById('formContact').value.trim();
+            const consumable = document.getElementById('formConsumable').value;
+            const notes = document.getElementById('formNotes').value.trim();
+            const imageUrl = document.getElementById('formImageUrl').value.trim();
+
+            if (id) {
+                const item = inventory.find(i => i.id === id);
+                if (item) {
+                    item.subject = subject;
+                    item.name = name;
+                    item.description = description;
+                    item.quantity = quantity;
+                    item.location = location;
+                    item.reorderThreshold = threshold;
+                    item.contact = contact;
+                    item.isConsumable = consumable;
+                    item.notes = notes;
+                    item.imageUrl = imageUrl;
+                    logActivity(`Updated record "${name}"`);
+                }
+            } else {
+                inventory.unshift({
+                    id: 'item-' + Date.now(),
+                    subject,
+                    name,
+                    description,
+                    quantity,
+                    location,
+                    reorderThreshold: threshold,
+                    contact,
+                    isConsumable: consumable,
+                    notes,
+                    imageUrl,
+                    isArchived: false,
+                    orderStatus: 'None',
+                    deliveryDate: ''
+                });
+                logActivity(`Added new record "${name}"`);
+            }
+
+            saveInventory(true);
+            applyInventoryFilters();
+            closeModal('modalItem');
+            showToast('Item saved');
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('formImageUrl').value = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // CSV & JSON EXPORT
+        function exportToCSV() {
+            const active = inventory.filter(i => !i.isArchived);
+            generateCSVDownload(active, `Brightmont_StCharles_Inventory_${new Date().toISOString().slice(0, 10)}.csv`);
+        }
+
+        function exportToJSON() {
+            const jsonStr = JSON.stringify(inventory, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Brightmont_StCharles_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            showToast('JSON Backup downloaded');
+        }
+
+        function generateCSVDownload(items, filename) {
+            const escapeCSV = (val) => {
+                if (val === null || val === undefined) val = '';
+                val = String(val);
+                if (val.includes('"') || val.includes(',') || val.includes('\n')) {
+                    return '"' + val.replace(/"/g, '""') + '"';
+                }
+                return '"' + val + '"';
+            };
+
+            const headerRow = EXACT_HEADERS.map(h => `"${h.replace(/"/g, '""')}"`).join(',');
+            const dataRows = items.map(i => [
+                escapeCSV(i.subject || ''),
+                escapeCSV(i.name || ''),
+                escapeCSV(i.description || ''),
+                escapeCSV(i.quantity !== undefined ? i.quantity : 0),
+                escapeCSV(i.location || ''),
+                escapeCSV(i.contact || ''),
+                escapeCSV((i.isConsumable === 'Yes' || i.isConsumable === true) ? 'Yes' : ''),
+                escapeCSV(i.notes || '')
+            ].join(','));
+
+            const csvString = [headerRow, ...dataRows].join('\r\n');
+            const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            showToast('CSV Export downloaded');
+        }
+
+        // DUPLICATE-AWARE CSV IMPORT
+        function openImportModal() {
+            document.getElementById('csvFileInput').value = '';
+            document.getElementById('importSummary').classList.add('hidden');
+            document.getElementById('btnExecuteImport').disabled = true;
+            document.getElementById('btnExecuteImport').classList.add('opacity-50', 'cursor-not-allowed');
+            parsedCSVRows = [];
+            document.getElementById('modalImport').classList.remove('hidden');
+        }
+
+        function processCSVFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const text = evt.target.result;
+                
+                if (file.name.endsWith('.json')) {
+                    try {
+                        parsedCSVRows = JSON.parse(text);
+                    } catch(err) {
+                        alert('Invalid JSON file format.');
+                        return;
+                    }
+                } else {
+                    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+                    if (lines.length < 2) return;
+
+                    parsedCSVRows = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const parts = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(p => p.replace(/^"|"$/g, '').trim());
+                        if (parts.length >= 2) {
+                            parsedCSVRows.push({
+                                subject: parts[0] || 'General',
+                                name: parts[1] || 'Untitled Item',
+                                description: parts[2] || '',
+                                quantity: parseInt(parts[3], 10) || 0,
+                                location: parts[4] || 'Main Closet',
+                                contact: parts[5] || '',
+                                isConsumable: (parts[6] || '').toLowerCase() === 'yes' ? 'Yes' : 'No',
+                                notes: parts[7] || ''
+                            });
+                        }
+                    }
+                }
+
+                const summary = document.getElementById('importSummary');
+                summary.className = 'p-3 rounded-xl bg-emerald-950/60 border border-emerald-800 text-emerald-300 font-bold';
+                summary.innerText = `Prepared ${parsedCSVRows.length} item records for import.`;
+                summary.classList.remove('hidden');
+
+                const btn = document.getElementById('btnExecuteImport');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            };
+
+            reader.readAsText(file);
+        }
+
+        function executeImport() {
+            if (parsedCSVRows.length === 0) return;
+            const strategy = document.querySelector('input[name="dupStrategy"]:checked').value;
+
+            let added = 0, updated = 0, skipped = 0;
+
+            parsedCSVRows.forEach(incoming => {
+                const idx = inventory.findIndex(i => 
+                    i.name.toLowerCase().trim() === incoming.name.toLowerCase().trim() &&
+                    i.location.toLowerCase().trim() === incoming.location.toLowerCase().trim()
+                );
+
+                if (idx >= 0) {
+                    if (strategy === 'skip') skipped++;
+                    else if (strategy === 'overwrite') {
+                        inventory[idx] = { ...inventory[idx], ...incoming, id: inventory[idx].id };
+                        updated++;
+                    } else if (strategy === 'append') {
+                        inventory.push({ ...incoming, id: 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000), isArchived: false });
+                        added++;
+                    }
+                } else {
+                    inventory.push({ ...incoming, id: 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000), isArchived: false });
+                    added++;
+                }
+            });
+
+            logActivity(`Imported records: ${added} added, ${updated} updated, ${skipped} skipped`);
+            saveInventory(true);
+            applyInventoryFilters();
+            closeModal('modalImport');
+            showToast(`Import completed: ${added} added, ${updated} updated, ${skipped} skipped.`);
+        }
+
+        function confirmFactoryReset() {
+            openConfirmModal('Reset local database to original Brightmont Academy St. Charles default dataset?', () => {
+                inventory = [...SEED_DATA];
+                activityLog = [];
+                saveInventory(true);
+                applyInventoryFilters();
+                showToast('Database reset to defaults');
+            });
+        }
+
+        // WEBHOOK SYNC
+        function saveWebhookUrl() {
+            const url = document.getElementById('webhookUrlInput').value.trim();
+            webhookUrl = url;
+            localStorage.setItem('brightmont_webhook_url', url);
+            showToast('Webhook URL saved');
+            if (url) sendWebhookData();
+        }
+
+        function sendWebhookData() {
+            if (!webhookUrl) return;
+            const dot = document.getElementById('syncDot');
+            const txt = document.getElementById('syncText');
+
+            if (txt) txt.innerText = 'Syncing...';
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(inventory.filter(i => !i.isArchived))
+            }).then(() => {
+                if (txt) txt.innerText = 'Sheet Synced';
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+            }).catch(err => {
+                if (txt) txt.innerText = 'Sync Warning';
+                if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+            });
+        }
+
+        function copyAppsScriptCode() {
+            const code = document.getElementById('appsScriptCode').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('Google Apps Script code copied to clipboard!');
+            }).catch(() => {
+                const area = document.createElement('textarea');
+                area.value = code;
+                document.body.appendChild(area);
+                area.select();
+                document.execCommand('copy');
+                document.body.removeChild(area);
+                showToast('Google Apps Script code copied!');
+            });
+        }
+
+        // MODALS & LIGHTBOX UTILITIES
+        function openLightbox(url, title, location) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightboxTitle').innerText = title;
+            document.getElementById('lightboxSub').innerText = `Location: ${location}`;
+            document.getElementById('modalLightbox').classList.remove('hidden');
+        }
+
+        function openConfirmModal(message, onConfirm) {
+            document.getElementById('confirmModalMessage').innerText = message;
+            const btn = document.getElementById('confirmModalExecuteBtn');
+            btn.onclick = function() {
+                onConfirm();
+                closeModal('modalConfirm');
+            };
+            document.getElementById('modalConfirm').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function handleQuickSearch(e) {
+            if (e.key === 'Enter') {
+                const val = e.target.value;
+                document.getElementById('inventorySearchInput').value = val;
+                switchTab('inventory');
+                applyInventoryFilters();
+            }
+        }
+
+        function updateBadgeCounters() {
+            const badge = document.getElementById('navReorderBadge');
+            const count = inventory.filter(i => !i.isArchived && ((i.isConsumable === 'Yes' || i.isConsumable === true) || i.quantity <= (i.reorderThreshold || 2))).length;
+            if (count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function getSubjectIcon(subject) {
+            const s = (subject || '').toLowerCase();
+            if (s.includes('math')) return 'fa-solid fa-calculator text-indigo-400';
+            if (s.includes('science')) return 'fa-solid fa-flask text-emerald-400';
+            if (s.includes('reading') || s.includes('english')) return 'fa-solid fa-book-open text-amber-400';
+            if (s.includes('art')) return 'fa-solid fa-palette text-rose-400';
+            if (s.includes('fitness') || s.includes('pe')) return 'fa-solid fa-basketball text-sky-400';
+            return 'fa-solid fa-box text-slate-400';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${escapeHtml(msg)}`;
+            container.appendChild(toast);
+
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
